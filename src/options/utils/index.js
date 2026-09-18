@@ -42,6 +42,8 @@ export const kUpdateURL = 'updateURL';
 export const TOGGLE_ON = 'toggle-on';
 export const TOGGLE_OFF = 'toggle-off';
 export const vmZipEntryName = VIOLENTMONKEY.toLowerCase();
+/** Replaces characters that are invalid in file names */
+export const normalizeFilename = name => name.replace(/[\\/:*?"<>|]/g, '-');
 
 // Same order as getSizes and sizesPrefixRe
 export const SIZE_TITLES = [
