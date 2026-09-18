@@ -20,7 +20,7 @@ import { getScriptName, sendCmdDirectly } from '@/common';
 import { formatDate } from '@/common/date';
 import options from '@/common/options';
 import { downloadBlob } from '@/common/download';
-import { vmZipEntryName } from '@/options/utils';
+import { normalizeFilename, vmZipEntryName } from '@/options/utils';
 import SettingCheck from '@/common/ui/setting-check';
 import SettingText from '@/common/ui/setting-text';
 import VmDateInfo from './vm-date-info';
@@ -39,10 +39,6 @@ async function handleExport() {
   } finally {
     exporting.value = false;
   }
-}
-
-function normalizeFilename(name) {
-  return name.replace(/[\\/:*?"<>|]/g, '-');
 }
 
 async function exportData() {

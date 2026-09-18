@@ -28,6 +28,7 @@
       <div class="mr-1">
         <a class="btn-ghost" @click="clipboardCopy" tabindex="0"><IconCopy/></a>
         <a class="btn-ghost" @click="clipboardPaste" tabindex="0" v-if="!frozen"><IconPaste/></a>
+        <a class="btn-ghost" @click="exportScript" tabindex="0"><IconDownload/></a>
       </div>
       <div class="mr-1">
         <button v-text="i18n('buttonSave')" @click="save"
@@ -103,13 +104,15 @@
 <script>
 import Icon from '@/common/ui/icon';
 import IconCopy from '~icons/mdi/content-copy';
+import IconDownload from '~icons/mdi/download';
 import IconPaste from '~icons/mdi/content-paste';
 import {
   browserWindows, getUniqId,
   debounce, formatByteLength, getScriptName, getScriptUpdateUrl, i18n, isEmpty,
   nullBool2string, sendCmdDirectly, trueJoin,
 } from '@/common';
-import { ERR_BAD_PATTERN, VM_DOCS_MATCHING, VM_HOME, kOrigTag, kTag } from '@/common/consts';
+import { ERR_BAD_PATTERN, METABLOCK_RE, VM_DOCS_MATCHING, VM_HOME, kOrigTag, kTag } from '@/common/consts';
+import { downloadBlob } from '@/common/download';
 import { deepCopy, deepEqual, objectPick } from '@/common/object';
 import { externalEditorInfoUrl, focusMe, getActiveElement, showMessage } from '@/common/ui';
 import { keyboardService } from '@/common/keyboard';
@@ -119,7 +122,7 @@ import { isGmStorageGranted } from '@/common/script';
 import { EXTERNAL_LINK_PROPS } from '@/common/ui';
 import {
   kDownloadURL, kExclude, kExcludeMatch, kHomepageURL, kIcon, kInclude, kMatch, kName, kOrigExclude, kOrigExcludeMatch,
-  kOrigInclude, kOrigMatch, kUpdateURL, kComment,
+  kOrigInclude, kOrigMatch, kUpdateURL, kComment, normalizeFilename,
 } from '../../utils';
 
 const EXTERNALS = 'externals';
@@ -334,6 +337,15 @@ function clipboardCopy() {
 async function clipboardPaste() {
   // not using setValue because our `dirty` handler reserves it for the initial unchanged code
   CM.replaceRange(await navigator.clipboard.readText(), {line: 0, ch: 0}, {line: 1e99, ch: 0}, 'paste');
+}
+function exportScript() {
+  const code = $codeComp.getRealContent();
+  // Exporting the code as shown in the editor (unsaved changes included),
+  // naming the file after `@name` from the metadata block, or `Untitled` if it's absent
+  const name = code.match(METABLOCK_RE)?.[4]
+    .match(/^[^\S\n]*\/\/[^\S\n]*@name[^\S\n]+(.+)$/m)?.[1]
+    .trim();
+  downloadBlob(new Blob([code], { type: 'text/javascript' }), `${normalizeFilename(name || 'Untitled')}.user.js`);
 }
 async function save() {
   if (!canSave.value) return;
